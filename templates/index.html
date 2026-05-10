@@ -33,8 +33,10 @@
       <p class="description">{{ weather.description }}</p>
       <p>Feels like {{ weather.feels_like }}°C</p>
       <p>Humidity: {{ weather.humidity }}%</p>
+      <p>Wind: {{ weather.wind_speed }} m/s</p>
     </div>
   {% endif %}
 
+  <script src ="{{url_for('static', filename='js/main.js')}}"></script>
 </body>
 </html>
