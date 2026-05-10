@@ -18,13 +18,23 @@
     >
     <button type ="submit">Search</button>
   </form>
-  {% if weather %}
-    <div class ="weather-card">
-      <h2>{{weather.city}}</h2>
-      <p>{{weather.temperature}}</p>
-      <p>{{weather.description}}</p>
-    </div>
+  {% if error %}
+    <p class="error">{{error}}</p>
   {% endif %}
   
+  {% if weather %}
+    <div class="weather-card">
+      <h2>{{weather.city}}, {{weather.country}}</h2>
+      <img
+          src="https://openweathermap.org/img/wn/{{ weather.icon }}@2x.png" 
+          alt="{{ weather.description }}"
+      >
+      <p class="temperature">{{weather.temperature}}°C</p>
+      <p class="description">{{ weather.description }}</p>
+      <p>Feels like {{ weather.feels_like }}°C</p>
+      <p>Humidity: {{ weather.humidity }}%</p>
+    </div>
+  {% endif %}
+
 </body>
 </html>
