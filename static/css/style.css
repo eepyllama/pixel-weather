@@ -1,1 +1,502 @@
-/* Phase 3: Our cutesy aesthetic styles will live here */
+/* ============================================================
+   PIXEL WEATHER — STYLESHEET
+   Built in layers. Read each section before moving to the next.
+   ============================================================ */
+
+
+/* ── LAYER 1: RESET & BASE ─────────────────────────────── */
+
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+:root {
+    /* The one font that rules them all */
+    --font-pixel: 'Press Start 2P', monospace;
+
+    /* Colour tokens */
+    --gold:       #ffd700;
+    --gold-dark:  #b8860b;
+    --gold-light: #ffe87c;
+    --void:       #1a1a2e;
+    --void-deep:  #0d0d1a;
+    --green-px:   #00ff41;   /* matrix terminal green */
+    --ice-blue:   #aef6ff;
+    --alert-red:  #ff6b6b;
+    --white:      #ffffff;
+    --card-bg:    rgba(10, 10, 20, 0.82);
+    --card-border: #ffd700;
+
+    /* Pixel sizes — everything in multiples of 4px */
+    --px: 4px;
+}
+
+html {
+    /* Tells browser: scale up without anti-aliasing */
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+}
+
+body {
+    font-family: var(--font-pixel);
+    background-color: var(--void);
+    color: var(--white);
+    min-height: 100vh;
+    overflow-x: hidden;
+    /* Default background before any search */
+    background-image: none;
+}
+
+
+/* ── LAYER 2: BACKGROUND SCENE SYSTEM ──────────────────── */
+
+/*
+   The .bg-scene div fills the entire viewport behind everything.
+   When JavaScript switches moods, it updates this div's
+   background-image to point to the matching pixel art file.
+   The transition creates a fade between scenes.
+*/
+
+.bg-scene {
+    position: fixed;
+    inset: 0;               /* top:0 right:0 bottom:0 left:0 — shorthand */
+    z-index: 0;
+    background-size: cover;
+    background-position: center bottom;
+    background-repeat: no-repeat;
+    transition: background-image 0s,  /* images can't transition smoothly */
+                opacity 0.8s ease;    /* so we fade opacity instead */
+    image-rendering: pixelated;
+
+    /* CSS gradient fallbacks — used when no image is loaded yet */
+    background-color: var(--void);
+}
+
+/* Each mood sets a gradient fallback AND marks which image to load */
+.bg-scene.mood-default {
+    background: linear-gradient(180deg, #1a1a2e 0%, #2d2d5e 50%, #1a3a5e 100%);
+}
+.bg-scene.mood-sunny {
+    background: linear-gradient(180deg, #87CEEB 0%, #c8e8ff 40%, #ffd580 70%, #7ec850 100%);
+    background-image: url('/static/images/bg-sunny.jpg');
+}
+.bg-scene.mood-cloudy {
+    background: linear-gradient(180deg, #4a5a6a 0%, #6a7a8a 40%, #8a9aaa 70%, #3a5a3a 100%);
+    background-image: url('/static/images/bg-cloudy.jpg');
+}
+.bg-scene.mood-rainy {
+    background: linear-gradient(180deg, #1a2a3a 0%, #2a3a5a 40%, #3a4a6a 70%, #2a3a2a 100%);
+    background-image: url('/static/images/bg-rainy.gif');
+}
+.bg-scene.mood-stormy {
+    background: linear-gradient(180deg, #0d0d1a 0%, #1a1a2e 40%, #2c1a3e 70%, #0d0d0d 100%);
+    background-image: url('/static/images/bg-stormy.gif');
+}
+.bg-scene.mood-snow {
+    background: linear-gradient(180deg, #b0c8e8 0%, #d4e8f8 40%, #e8f4ff 70%, #e0ecf0 100%);
+    background-image: url('/static/images/bg-snow.jpg');
+}
+.bg-scene.mood-night {
+    background: linear-gradient(180deg, #020210 0%, #0d0d2b 40%, #1a1a4e 70%, #0d1a0d 100%);
+    background-image: url('/static/images/bg-night.png');
+}
+.bg-scene.mood-mist {
+    background: linear-gradient(180deg, #8a9aaa 0%, #aabaca 50%, #c8d8e0 100%);
+    background-image: url('/static/images/bg-mist.png');
+}
+
+
+/* ── LAYER 3: CRT SCANLINES ─────────────────────────────── */
+
+/*
+   Scanlines are a classic retro effect — fine horizontal lines
+   that mimic old CRT monitors. We create them with a repeating
+   CSS gradient overlay. 'pointer-events: none' means clicks
+   pass right through this decorative layer.
+*/
+
+.scanlines {
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0, 0, 0, 0.08) 2px,
+        rgba(0, 0, 0, 0.08) 4px
+    );
+}
+
+
+/* ── LAYER 4: LAYOUT ────────────────────────────────────── */
+
+.container {
+    position: relative;
+    z-index: 2;           /* above bg-scene (0) and scanlines (1) */
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 4rem;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+
+/* ── LAYER 5: HEADER ────────────────────────────────────── */
+
+.pixel-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding-top: 1.5rem;
+    width: 100%;
+}
+
+.header-sprite {
+    font-size: 2.5rem;
+    /* pixelated rendering on emoji */
+    image-rendering: pixelated;
+    animation: sprite-bob 1s steps(2) infinite;
+}
+
+/* steps(2) — animates in 2 discrete frames, not smooth.
+   This is how sprite animations work in old games. */
+@keyframes sprite-bob {
+    0%, 100% { transform: translateY(0); }
+    50%       { transform: translateY(-4px); }
+}
+
+.game-title {
+    font-size: 0.85rem;
+    color: var(--gold);
+    text-shadow:
+        2px 2px 0 var(--gold-dark),
+        4px 4px 0 rgba(0,0,0,0.5);
+    letter-spacing: 0.05em;
+    line-height: 1.6;
+}
+
+.game-subtitle {
+    font-size: 0.5rem;
+    color: var(--green-px);
+    margin-top: 6px;
+    opacity: 0.8;
+}
+
+
+/* ── LAYER 6: SEARCH FORM ───────────────────────────────── */
+
+.search-section {
+    width: 100%;
+}
+
+.search-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    width: 100%;
+}
+
+.input-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--void-deep);
+    border: 3px solid var(--green-px);
+    padding: 2px 12px;
+    box-shadow:
+        0 0 12px rgba(0, 255, 65, 0.25),   /* outer glow */
+        inset 0 0 8px rgba(0, 255, 65, 0.05); /* inner glow */
+}
+
+.input-cursor {
+    color: var(--green-px);
+    font-size: 0.6rem;
+    animation: blink 1s steps(1) infinite;
+}
+
+.pixel-input {
+    flex: 1;
+    font-family: var(--font-pixel);
+    font-size: 0.55rem;
+    background: transparent;
+    border: none;
+    color: var(--green-px);
+    outline: none;
+    padding: 10px 0;
+    caret-color: var(--green-px);
+    text-transform: uppercase;  /* all input appears as uppercase */
+    letter-spacing: 0.1em;
+}
+
+.pixel-input::placeholder {
+    color: rgba(0, 255, 65, 0.4);
+}
+
+/*
+   The pixel button uses box-shadow to fake a 3D raised effect.
+   No border-radius — pixel art is always sharp corners.
+   The :active state shifts the shadow to simulate pressing down.
+*/
+.pixel-btn {
+    font-family: var(--font-pixel);
+    font-size: 0.6rem;
+    background: var(--gold);
+    color: var(--void);
+    border: none;
+    padding: 14px 20px;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    box-shadow:
+        4px 4px 0 var(--gold-dark),
+        inset -2px -2px 0 rgba(0,0,0,0.2),
+        inset 2px 2px 0 var(--gold-light);
+    transition: transform 0.05s, box-shadow 0.05s;
+    width: 100%;
+}
+
+.pixel-btn:hover {
+    background: var(--gold-light);
+}
+
+.pixel-btn:active {
+    transform: translate(4px, 4px);
+    box-shadow:
+        0 0 0 var(--gold-dark),
+        inset -2px -2px 0 rgba(0,0,0,0.2);
+}
+
+
+/* ── LAYER 7: ERROR STATE ───────────────────────────────── */
+
+.pixel-error {
+    width: 100%;
+    font-size: 0.55rem;
+    color: var(--alert-red);
+    border: 3px solid var(--alert-red);
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(255, 107, 107, 0.1);
+    animation: glitch 0.3s steps(2) 1;
+    box-shadow: 4px 4px 0 rgba(255,107,107,0.3);
+}
+
+/* Glitch animation — a quick horizontal shift on error appear */
+@keyframes glitch {
+    0%   { transform: translateX(0); }
+    25%  { transform: translateX(-4px); }
+    50%  { transform: translateX(4px); }
+    75%  { transform: translateX(-2px); }
+    100% { transform: translateX(0); }
+}
+
+
+/* ── LAYER 8: WEATHER CARD ──────────────────────────────── */
+
+/*
+   The card uses a dark semi-transparent background so the
+   pixel art landscape shows through behind it.
+   The border is solid gold — no border-radius, ever.
+   The box-shadow creates a layered pixel border effect.
+*/
+
+.pixel-card {
+    width: 100%;
+    background: var(--card-bg);
+    border: 3px solid var(--card-border);
+    padding: 1.5rem;
+    box-shadow:
+        0 0 0 2px var(--void),
+        0 0 0 4px var(--gold-dark),
+        8px 8px 0 rgba(0,0,0,0.5);
+    animation: card-in 0.4s steps(4) forwards;
+    backdrop-filter: blur(4px);     /* subtle blur through card */
+}
+
+/* steps(4) on card entrance — appears in 4 discrete jumps
+   like a pixel art sprite animation, not a smooth slide */
+@keyframes card-in {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Location bar */
+.card-location {
+    display: flex;
+    align-items: baseline;
+    gap: 0.6rem;
+    margin-bottom: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.city-name {
+    font-size: 0.8rem;
+    color: var(--gold);
+    text-shadow: 2px 2px 0 var(--gold-dark);
+    letter-spacing: 0.08em;
+}
+
+.country-tag {
+    font-size: 0.5rem;
+    color: rgba(255, 215, 0, 0.6);
+}
+
+/* The ████ divider */
+.card-divider {
+    font-size: 0.35rem;
+    color: rgba(255, 215, 0, 0.25);
+    letter-spacing: -0.1em;
+    margin: 0.75rem 0;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+/* Main temp + icon row */
+.card-main {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin: 0.5rem 0;
+}
+
+.weather-icon-box {
+    font-size: 3rem;
+    image-rendering: pixelated;
+    animation: sprite-bob 1.5s steps(2) infinite;
+    flex-shrink: 0;
+}
+
+/* Hide the raw icon code — JS replaces it with an emoji */
+.pixel-weather-icon {
+    font-size: 0;          /* hides the "01d" text */
+    width: 56px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* JS will set this class to show the right emoji at full size */
+.pixel-weather-icon::before {
+    font-size: 3rem;
+    image-rendering: pixelated;
+}
+
+/* Condition-specific icon classes — set by JS */
+.icon-clear-day::before    { content: '☀️'; }
+.icon-clear-night::before  { content: '🌙'; }
+.icon-cloudy::before       { content: '⛅'; }
+.icon-overcast::before     { content: '☁️'; }
+.icon-drizzle::before      { content: '🌦️'; }
+.icon-rainy::before        { content: '🌧️'; }
+.icon-stormy::before       { content: '⛈️'; }
+.icon-snow::before         { content: '❄️'; }
+.icon-mist::before         { content: '🌫️'; }
+
+.temperature {
+    font-size: 2.2rem;
+    color: var(--white);
+    text-shadow:
+        3px 3px 0 rgba(0,0,0,0.5),
+        -1px -1px 0 rgba(255,255,255,0.1);
+    line-height: 1;
+}
+
+.degree {
+    font-size: 0.8rem;
+    color: var(--gold);
+    vertical-align: super;
+}
+
+.weather-desc {
+    font-size: 0.5rem;
+    color: var(--ice-blue);
+    margin-top: 8px;
+    letter-spacing: 0.08em;
+}
+
+/* RPG stats panel */
+.card-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+.stat-row {
+    display: flex;
+    align-items: baseline;
+    font-size: 0.5rem;
+    gap: 4px;
+}
+
+.stat-label {
+    color: rgba(255,255,255,0.6);
+    flex-shrink: 0;
+    min-width: 90px;
+}
+
+.stat-dots {
+    color: rgba(255,255,255,0.15);
+    flex: 1;
+    overflow: hidden;
+    letter-spacing: 0.1em;
+}
+
+.stat-value {
+    color: var(--white);
+    flex-shrink: 0;
+}
+
+/* Message bar */
+.card-message {
+    font-size: 0.45rem;
+    color: var(--green-px);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    opacity: 0.85;
+    letter-spacing: 0.05em;
+}
+
+/* Blinking cursor — steps(1) = instant on/off, like a real terminal */
+@keyframes blink {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0; }
+}
+
+.blink {
+    animation: blink 1s steps(1) infinite;
+    color: var(--green-px);
+}
+
+
+/* ── LAYER 9: SNOW MOOD OVERRIDE ───────────────────────── */
+
+/* On snow, dark text reads better against the light background */
+body[data-mood="snow"] .game-title { color: #1a1a2e; text-shadow: 1px 1px 0 rgba(0,0,0,0.2); }
+body[data-mood="snow"] .game-subtitle { color: #2a2a5e; }
+body[data-mood="snow"] .city-name { color: #1a1a2e; }
+body[data-mood="snow"] .pixel-card { background: rgba(255,255,255,0.85); color: #1a1a2e; }
+body[data-mood="snow"] .stat-label { color: rgba(0,0,0,0.6); }
+body[data-mood="snow"] .temperature { color: #1a1a2e; text-shadow: none; }
+body[data-mood="snow"] .weather-desc { color: #2a4a8a; }
+
+
+/* ── LAYER 10: RESPONSIVE ───────────────────────────────── */
+
+@media (max-width: 420px) {
+    .game-title { font-size: 0.65rem; }
+    .temperature { font-size: 1.7rem; }
+    .card-main { flex-direction: column; align-items: flex-start; }
+    .stat-dots { display: none; } /* too cramped on tiny screens */
+    .stat-row { justify-content: space-between; }
+}

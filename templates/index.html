@@ -1,42 +1,160 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Weather App</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>
+        {% if weather %}{{ weather.city }} // WEATHER{% else %}PIXEL WEATHER{% endif %}
+    </title>
+
+    <!--
+        Press Start 2P — the definitive pixel art font.
+        'display=swap' means text shows in a fallback font
+        while the custom font loads, then swaps in.
+        This prevents invisible text during load.
+    -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap"
+          rel="stylesheet">
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/style.css') }}">
 </head>
-<body>
 
-  <h1>Weather App</h1>
+<!--
+    data-weather: the icon code from Flask e.g. "01d", "10n"
+    data-mood:    JavaScript will write the mood name here e.g. "sunny"
+    Both are used by CSS and JS to switch backgrounds and styles.
+-->
+<body
+    data-weather="{{ weather.icon if weather else 'default' }}"
+    data-mood="default"
+>
 
-  <form action = "/weather" method = "POST">
-    <input
-      type="text"
-      name="city"
-      placeholder="Enter a city..."
-      required
-    >
-    <button type ="submit">Search</button>
-  </form>
-  {% if error %}
-    <p class="error">{{error}}</p>
-  {% endif %}
-  
-  {% if weather %}
-    <div class="weather-card">
-      <h2>{{weather.city}}, {{weather.country}}</h2>
-      <img
-          src="https://openweathermap.org/img/wn/{{ weather.icon }}@2x.png" 
-          alt="{{ weather.description }}"
-      >
-      <p class="temperature">{{weather.temperature}}°C</p>
-      <p class="description">{{ weather.description }}</p>
-      <p>Feels like {{ weather.feels_like }}°C</p>
-      <p>Humidity: {{ weather.humidity }}%</p>
-      <p>Wind: {{ weather.wind_speed }} m/s</p>
-    </div>
-  {% endif %}
+    <!--
+        The background scene layer.
+        This div sits behind everything and shows the pixel art image.
+        Separating it into its own div (instead of styling body directly)
+        lets us animate ONLY the background without affecting layout.
+    -->
+    <div class="bg-scene" id="bgScene"></div>
 
-  <script src ="{{url_for('static', filename='js/main.js')}}"></script>
+    <!-- Scanline overlay — gives a subtle CRT screen texture -->
+    <div class="scanlines"></div>
+
+    <main class="container">
+
+        <!-- ═══ HEADER ═══ -->
+        <header class="pixel-header">
+            <div class="header-sprite"><img src="{{ url_for('static', filename='images/rainbow.png') }}" width="50"></div>
+            <div class="header-text">
+                <h1 class="game-title">PIXEL WEATHER</h1>
+                <p class="game-subtitle">// FORECAST SYSTEM v1.0</p>
+            </div>
+        </header>
+
+        <!-- ═══ SEARCH ═══ -->
+        <section class="search-section">
+            <form class="search-form" action="/weather" method="POST">
+                <div class="input-wrapper">
+                    <span class="input-cursor">▶</span>
+                    <input
+                        class="pixel-input"
+                        type="text"
+                        name="city"
+                        placeholder="ENTER CITY NAME"
+                        autocomplete="off"
+                        spellcheck="false"
+                        required
+                    >
+                </div>
+                <button class="pixel-btn" type="submit">
+                    SEARCH
+                </button>
+            </form>
+        </section>
+
+        <!-- ═══ ERROR ═══ -->
+        {% if error %}
+        <div class="pixel-error">
+            <span class="error-icon">✗</span>
+            <span>{{ error | upper }}</span>
+        </div>
+        {% endif %}
+
+        <!-- ═══ WEATHER CARD ═══ -->
+        {% if weather %}
+        <section class="pixel-card" id="weatherCard">
+
+            <!-- Location bar -->
+            <div class="card-location">
+                <span class="location-icon">📍</span>
+                <span class="city-name">{{ weather.city | upper }}</span>
+                <span class="country-tag">[{{ weather.country }}]</span>
+            </div>
+
+            <div class="card-divider">
+                ████████████████████████████████
+            </div>
+
+            <!-- Main weather display -->
+            <div class="card-main">
+                <!--
+                    The weather icon area.
+                    We use a CSS-only pixel icon approach:
+                    a large emoji styled with image-rendering: pixelated
+                    + a custom icon class JavaScript applies per condition.
+                -->
+                <div class="weather-icon-box" id="weatherIconBox">
+                    <div class="pixel-weather-icon" id="pixelIcon">
+                        {{ weather.icon }}
+                    </div>
+                </div>
+
+                <div class="card-temp-block">
+                    <div class="temperature">{{ weather.temperature }}<span class="degree">°C</span></div>
+                    <div class="weather-desc">{{ weather.description | upper }}</div>
+                </div>
+            </div>
+
+            <div class="card-divider">
+                ████████████████████████████████
+            </div>
+
+            <!-- Detail stats — RPG stats panel style -->
+            <div class="card-stats">
+                <div class="stat-row">
+                    <span class="stat-label">FEELS LIKE</span>
+                    <span class="stat-dots">··············</span>
+                    <span class="stat-value">{{ weather.feels_like }}°C</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">HUMIDITY</span>
+                    <span class="stat-dots">··············</span>
+                    <span class="stat-value">{{ weather.humidity }}%</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">WIND SPD</span>
+                    <span class="stat-dots">··············</span>
+                    <span class="stat-value">{{ weather.wind_speed }}M/S</span>
+                </div>
+            </div>
+
+            <div class="card-divider">
+                ████████████████████████████████
+            </div>
+
+            <!-- Mood message — set by JavaScript -->
+            <div class="card-message" id="cardMessage">
+                <span class="blink">▌</span>
+                <span id="messageText">LOADING FORECAST...</span>
+            </div>
+
+        </section>
+        {% endif %}
+
+    </main>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 </body>
 </html>
