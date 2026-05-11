@@ -38,7 +38,7 @@
 
 | Homepage | Weather Card | Forecast |
 |----------|-------------|----------|
-| `📷 screenshot coming soon` | `📷 screenshot coming soon` | `📷 screenshot coming soon` |
+| <img width="741" height="728" alt="image" src="https://github.com/user-attachments/assets/c171f77f-7a34-4859-9dc9-371f48fa612b" /> | <img width="439" height="292" alt="image" src="https://github.com/user-attachments/assets/a71061ee-5040-46ae-9175-055eff804697" /> |<img width="450" height="159" alt="image" src="https://github.com/user-attachments/assets/e47018d1-8edf-4fea-96d6-1008742bb5e4" />|
 
 ---
 
