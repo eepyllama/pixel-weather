@@ -1,11 +1,5 @@
-// Phase 3: Dynamic behaviour will live here
 // ============================================================
-// PIXEL WEATHER — MOOD ENGINE
-// Reads the weather icon code, applies the correct:
-//   - background scene class
-//   - body data-mood attribute  
-//   - pixel icon class
-//   - flavour message
+// PIXEL WEATHER — MOOD ENGINE (fixed)
 // ============================================================
 
 const ICON_TO_MOOD = {
@@ -20,78 +14,58 @@ const ICON_TO_MOOD = {
     '50d': 'mist',    '50n': 'night',
 };
 
-const ICON_TO_CLASS = {
-    '01d': 'icon-clear-day',
-    '01n': 'icon-clear-night',
-    '02d': 'icon-cloudy',    '02n': 'icon-cloudy',
-    '03d': 'icon-overcast',  '03n': 'icon-overcast',
-    '04d': 'icon-overcast',  '04n': 'icon-overcast',
-    '09d': 'icon-drizzle',   '09n': 'icon-drizzle',
-    '10d': 'icon-rainy',     '10n': 'icon-rainy',
-    '11d': 'icon-stormy',    '11n': 'icon-stormy',
-    '13d': 'icon-snow',      '13n': 'icon-snow',
-    '50d': 'icon-mist',      '50n': 'icon-mist',
+const ICON_TO_EMOJI = {
+    '01d': '☀️',  '01n': '🌙',
+    '02d': '⛅',  '02n': '☁️',
+    '03d': '☁️',  '03n': '☁️',
+    '04d': '☁️',  '04n': '☁️',
+    '09d': '🌦️', '09n': '🌧️',
+    '10d': '🌧️', '10n': '🌧️',
+    '11d': '⛈️', '11n': '⛈️',
+    '13d': '❄️',  '13n': '❄️',
+    '50d': '🌫️', '50n': '🌫️',
 };
 
 const MOOD_MESSAGES = {
-    sunny:  '> CLEAR SKIES. PERFECT VISIBILITY. ADVENTURE AWAITS.',
-    cloudy: '> OVERCAST. KEEP YOUR COMPASS CLOSE.',
-    rainy:  '> RAINFALL DETECTED. SEEK SHELTER OR SAIL THROUGH.',
-    stormy: '> STORM WARNING. ALL HANDS ON DECK.',
-    snow:   '> SNOWFALL ACTIVE. TREAD CAREFULLY, TRAVELLER.',
-    night:  '> NIGHT MODE. STARS ARE YOUR NAVIGATION.',
-    mist:   '> LOW VISIBILITY. PROCEED WITH CAUTION.',
-    default:'> AWAITING LOCATION DATA...',
+    sunny:   '> CLEAR SKIES. PERFECT VISIBILITY.',
+    cloudy:  '> OVERCAST. KEEP YOUR COMPASS CLOSE.',
+    rainy:   '> RAINFALL DETECTED. SEEK SHELTER.',
+    stormy:  '> STORM WARNING. ALL HANDS ON DECK.',
+    snow:    '> SNOWFALL ACTIVE. TREAD CAREFULLY.',
+    night:   '> NIGHT MODE. STARS ARE YOUR GUIDE.',
+    mist:    '> LOW VISIBILITY. PROCEED WITH CAUTION.',
+    default: '> AWAITING LOCATION DATA...',
 };
 
-// All possible mood class names — we remove all before adding one
-const ALL_MOODS = ['mood-sunny','mood-cloudy','mood-rainy',
-                   'mood-stormy','mood-snow','mood-night',
-                   'mood-mist','mood-default'];
+const ALL_MOOD_CLASSES = [
+    'mood-sunny','mood-cloudy','mood-rainy',
+    'mood-stormy','mood-snow','mood-night',
+    'mood-mist','mood-default'
+];
 
-function applyMood() {
-    const iconCode  = document.body.dataset.weather;
-    const bgScene   = document.getElementById('bgScene');
-    const iconBox   = document.getElementById('pixelIcon');
-    const msgText   = document.getElementById('messageText');
-
-    // Determine mood — fallback to 'default' if icon not recognised
-    const mood = ICON_TO_MOOD[iconCode] || 'default';
-
-    // 1. Update body data-mood (used by CSS snow overrides)
-    document.body.dataset.mood = mood;
-
-    // 2. Switch background scene class
-    if (bgScene) {
-        ALL_MOODS.forEach(cls => bgScene.classList.remove(cls));
-        bgScene.classList.add(`mood-${mood}`);
-    }
-
-    // 3. Apply pixel icon class
-    if (iconBox) {
-        // Remove all existing icon classes
-        iconBox.className = 'pixel-weather-icon';
-        const iconClass = ICON_TO_CLASS[iconCode];
-        if (iconClass) {
-            iconBox.classList.add(iconClass);
-        }
-    }
-
-    // 4. Set the flavour message with typewriter effect
-    if (msgText) {
-        const message = MOOD_MESSAGES[mood] || MOOD_MESSAGES.default;
-        typewriter(msgText, message, 40);
-    }
-}
-
-// Typewriter effect — prints text one character at a time.
-// 'el' is the DOM element, 'text' is the full string,
-// 'speed' is milliseconds per character.
+// Typewriter — cancels any previous run via a closure flag
+// Each call creates a new 'active' flag; old intervals
+// check the flag and stop themselves automatically
 function typewriter(el, text, speed) {
+    // Clear immediately so old text never shows doubled
     el.textContent = '';
+
     let i = 0;
 
+    // Using a named function instead of anonymous arrow
+    // so we can cancel cleanly
+    let cancelled = false;
+
+    // Cancel any previous typewriter on this element
+    // by storing a cancel function on the element itself
+    if (el._cancelTypewriter) {
+        el._cancelTypewriter();
+    }
+
+    el._cancelTypewriter = () => { cancelled = true; };
+
     function tick() {
+        if (cancelled) return;
         if (i < text.length) {
             el.textContent += text[i];
             i++;
@@ -102,5 +76,52 @@ function typewriter(el, text, speed) {
     tick();
 }
 
-// Run everything once the page DOM is ready
-document.addEventListener('DOMContentLoaded', applyMood);
+function applyMood() {
+    const iconCode = document.body.dataset.weather;
+    const bgScene  = document.getElementById('bgScene');
+    const msgText  = document.getElementById('messageText');
+
+    const mood = ICON_TO_MOOD[iconCode] || 'default';
+
+    // 1. Update body data-mood
+    document.body.dataset.mood = mood;
+
+    // 2. Switch background class
+    if (bgScene) {
+        ALL_MOOD_CLASSES.forEach(c => bgScene.classList.remove(c));
+        bgScene.classList.add(`mood-${mood}`);
+    }
+
+    // 3. Typewriter message — single call, self-cancelling
+    if (msgText) {
+        const message = MOOD_MESSAGES[mood] || MOOD_MESSAGES.default;
+        typewriter(msgText, message, 45);
+    }
+}
+
+function applyWeatherIcon() {
+    const iconCode = document.body.dataset.weather;
+    const iconBox  = document.getElementById('pixelIcon');
+
+    if (iconBox && iconCode) {
+        const emoji = ICON_TO_EMOJI[iconCode] || '🌡️';
+        // Set textContent directly — no CSS ::before trickery
+        // This is simpler and more reliable across browsers
+        iconBox.textContent = emoji;
+    }
+}
+
+function applyForecastIcons() {
+    const cards = document.querySelectorAll('.forecast-icon');
+    cards.forEach(el => {
+        const code = el.dataset.icon;
+        el.textContent = ICON_TO_EMOJI[code] || '🌡️';
+    });
+}
+
+// ONE single DOMContentLoaded listener — the root fix for the double bug
+document.addEventListener('DOMContentLoaded', function() {
+    applyMood();
+    applyWeatherIcon();
+    applyForecastIcons();
+});

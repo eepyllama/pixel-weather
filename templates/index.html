@@ -107,7 +107,11 @@
                 -->
                 <div class="weather-icon-box" id="weatherIconBox">
                     <div class="pixel-weather-icon" id="pixelIcon">
-                        {{ weather.icon }}
+                        <!--
+                        Leave this empty — JavaScript fills it via
+                        applyWeatherIcon() using the body's data-weather attribute.
+                        We never render the raw icon code into the HTML.
+                        -->
                     </div>
                 </div>
 
@@ -150,6 +154,40 @@
                 <span id="messageText">LOADING FORECAST...</span>
             </div>
 
+        </section>
+        {% endif %}
+
+        <!------------------5 DAY FORECAST----------------->
+        {% if forecast %}
+        <section class ="forecast-section">
+
+            <div class="forecast-header">
+                ▶ 5-DAY FORECAST
+            </div>
+
+            <div class="forecast-grid">
+                {% for day in forecast %}
+                <div class = "forecast-card">
+
+                    <div class="forecast-day">{{day.day}}</div>
+
+                    <div class="forecast-icon" data-icon ="{{day.icon}}">
+                        <!-- JS fills this with the right emoji -->
+                    </div>
+
+                    <div class="forecast temps">
+                        <span class="temp-high">{{day.max_temp}}°</span>
+                        <span class="temp-divider">/</span>
+                        <span class="temp-low">{{day.min_temp}}</span>
+                    </div>
+
+                    <div class="forecast-desc">
+                        {{day.description | upper | truncate(12, true, '')}}
+                    </div>
+
+                </div>
+                {% endfor %}
+            </div>
         </section>
         {% endif %}
 
